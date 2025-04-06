@@ -5,7 +5,10 @@ function Dashboardlayout({children}) {
     return (
         <div>
             <Header />
-            {children}
+            <div className='mx-5 md:mx-20 lg:mx-35'>
+            {children} 
+            </div>
+        
         </div>
     )
 }
