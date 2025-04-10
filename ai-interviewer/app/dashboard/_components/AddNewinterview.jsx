@@ -56,7 +56,7 @@ function AddNewInterview() {
         </div>
         <div className="my-3">
         <label>Job Description/ Tech Stack (In Short)</label>
-        <Textarea placeholder="Ex. Typescript, React, NextJs, NodeJs, MySql extc"
+        <Textarea placeholder="Ex.ReactJS, NextJs, NodeJs, MySql extc"
            required
            onChange={(event)=>setJobDesc(event.target.value)}
         />
