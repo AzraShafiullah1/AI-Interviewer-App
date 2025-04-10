@@ -1,66 +1,33 @@
-const {
+const { 
     GoogleGenerativeAI,
-    HarmCategory,
+    HarmCategory, 
     HarmBlockThreshold,
-  } = require("@google/generative-ai");
-  const fs = require("node:fs");
-  const mime = require("mime-types");
-  
-  const apiKey = process.env.GEMINI_API_KEY;
-  const genAI = new GoogleGenerativeAI(apiKey);
-  
-  const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash",
+   } = require("@google/generative-ai");
+const fs = require("fs");
+const mime = require("mime-types");
+
+const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+const genAI = new GoogleGenerativeAI(apiKey);
+
+const model = genAI.getGenerativeModel({
+  model: "gemini-2.0-flash",
+});
+
+const generationConfig = {
+  temperature: 1,
+  topP: 0.95,
+  topK: 40,
+  maxOutputTokens: 8192,
+  responseModalities: [],
+  responseMimeType: "text/plain",
+  category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+  threadId: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+
+};
+
+
+  export const chatSession = model.startChat({
+    generationConfig,
+    safetySettings,
   });
-  
-  const generationConfig = {
-    temperature: 1,
-    topP: 0.95,
-    topK: 40,
-    maxOutputTokens: 8192,
-    responseModalities: [
-    ],
-    responseMimeType: "text/plain",
-  };
-  
-  async function run() {
-    const chatSession = model.startChat({
-      generationConfig,
-      history: [
-        {
-          role: "user",
-          parts: [
-            {text: "Job position Full stack, Job Description, React, Node.js, MySQL, Year of Experience 5. Depends on this information, please give me 5 in 5 Interview Question with Answered in Jason Format. Give Question and answer as field in JSON"},
-          ],
-        },
-        {
-          role: "model",
-          parts: [
-            {text: "Here's a thinking process that could lead to the JSON output:\n\n1.  **Understand the Goal:** The user wants 5 interview questions *with answers* specifically tailored for a Full Stack Developer position requiring 5 years of experience, focusing on React, Node.js, and MySQL. The output must be in JSON format, with \"Question\" and \"Answer\" as fields for each item.\n\n2.  **Identify Key Constraints & Requirements:**\n    *   **Role:** Full Stack Developer\n    *   **Experience:** 5 years (This implies questions should be beyond basic syntax and touch on architecture, best practices, performance, and potentially team/project leadership aspects).\n    *   **Core Tech:** React (Frontend), Node.js (Backend), MySQL (Database).\n    *   **Output Format:** JSON array of objects, each object having `Question` and `Answer` keys.\n    *   **Quantity:** 5 question/answer pairs.\n\n3.  **Brainstorm Question Categories:** To ensure good coverage, think about different facets of a Full Stack role with 5 years of experience:\n    *   **React Specific:** Component lifecycle, state management, performance optimization, hooks, architecture (maybe context vs. Redux).\n    *   **Node.js Specific:** Event loop, asynchronous programming (async/await, promises), error handling, middleware, REST API design, security.\n    *   **Database (MySQL) Specific:** Query optimization, indexing, transactions, schema design, ORMs vs. raw SQL.\n    *   **Full Stack Integration:** How frontend and backend interact, data flow, authentication/authorization, CORS.\n    *   **Architecture & Design:** System design, scalability, microservices vs. monolith (relevant for 5 YOE), testing strategies.\n    *   **Experience & Problem Solving:** Handling complex bugs, dealing with technical debt, project experiences.\n\n4.  **Draft Potential Questions (more than 5 initially):**\n    *   *React:* Describe how you'd optimize a slow-rendering React component.\n    *   *React:* Explain the difference between `useEffect`, `useLayoutEffect`, and `useMemo`/`useCallback`. When would you use each?\n    *   *React:* How do you manage global state in a large React application? Discuss Context API vs. Redux/Zustand.\n    *   *Node.js:* Explain the Node.js event loop in detail. How does it handle asynchronous operations?\n    *   *Node.js:* How do you handle errors effectively in a Node.js application, especially in asynchronous code?\n    *   *Node.js:* Describe your approach to designing a RESTful API in Node.js. What are key considerations?\n    *   *MySQL:* How would you diagnose and optimize a slow MySQL query?\n    *   *MySQL:* Explain database indexing in MySQL. What types of indexes are there, and when would you use them?\n    *   *MySQL:* What are ACID properties, and why are they important in database transactions?\n    *   *Full Stack:* Describe the typical flow of an HTTP request from a React frontend to a Node.js backend interacting with a MySQL database. Mention key steps like CORS, authentication, data validation.\n    *   *Architecture:* How would you approach designing a system for scalability given these technologies?\n    *   *Experience:* Tell me about a challenging technical problem you faced on a project using React/Node/MySQL and how you solved it.\n\n5.  **Select and Refine 5 Questions:** Choose a mix that covers React, Node, MySQL, and integration/experience, suitable for a 5 YOE candidate. Aim for questions that require more than just a definition – they should probe understanding and practical application.\n\n    *   **Q1 (React - Performance/Hooks):** \"How would you identify and optimize a performance bottleneck in a large React application? Mention specific tools and techniques, including hooks like `useMemo` and `useCallback`.\" (Combines performance and specific hook knowledge).\n    *   **Q2 (Node.js - Async/Event Loop):** \"Explain the Node.js event loop and its phases. How does `libuv` play a role, and how does this model enable non-blocking I/O? Give an example of how mishandling asynchronous operations could block the event loop.\" (Tests deep Node understanding).\n    *   **Q3 (MySQL - Optimization/Indexing):** \"You have a MySQL query that's running slowly. Describe the steps you would take to diagnose the issue and optimize it. What role do indexes play, and what are potential downsides of over-indexing?\" (Practical database skill).\n    *   **Q4 (Full Stack - Integration/Security):** \"Describe the process of implementing secure user authentication (e.g., using JWT) in a full-stack application with a React frontend, Node.js backend, and MySQL database. Mention key security considerations at each layer.\" (Covers integration and a critical aspect like security).\n    *   **Q5 (Experience/Design):** \"Given your 5 years of experience, describe a situation where you had to refactor a significant portion of either a React frontend or a Node.js backend. What prompted the refactoring, what was your approach, and what were the outcomes and challenges?\" (Probes practical experience, decision-making, and problem-solving).\n\n6.  **Develop Detailed Answers:** For each selected question, write a comprehensive answer that reflects the expected knowledge level of a 5 YOE developer.\n    *   **A1 (React):** Mention React DevTools Profiler, `React.memo`, `useMemo`, `useCallback`, code splitting, virtual DOM diffing, minimizing state updates, debouncing/throttling.\n    *   **A2 (Node.js):** Explain event queue, call stack, `libuv` thread pool, phases (timers, pending callbacks, idle/prepare, poll, check, close callbacks), non-blocking I/O benefits, example of CPU-intensive sync code blocking the loop.\n    *   **A3 (MySQL):** Mention `EXPLAIN` statement, analyzing query plan, checking for full table scans, adding appropriate indexes (B-Tree, Full-text, etc.), considering composite indexes, rewriting the query, potential downsides (write performance, storage).\n    *   **A4 (Full Stack Auth):** Cover login flow (credentials -> server), validation, password hashing (bcrypt), JWT generation (payload, secret, signature), storing JWT (localStorage/sessionStorage/HttpOnly cookie tradeoffs), sending JWT in headers (Authorization: Bearer), backend middleware for verification, protecting routes, refresh tokens, secure storage of secrets, HTTPS.\n    *   **A5 (Refactoring):** Structure the answer: Reason (performance, tech debt, new features), Approach (planning, testing strategy, incremental rollout vs. big bang, tools used), Outcome (metrics improved, maintainability), Challenges (team coordination, unforeseen issues, regressions). Give a *hypothetical but realistic* example if a specific personal one isn't readily available, framed as \"A common scenario involves...\".\n\n7.  **Format as JSON:** Create the final JSON structure as requested: an array `[]` containing objects `{}`. Each object should have the keys `\"Question\"` and `\"Answer\"` with the corresponding drafted text as string values. Ensure proper JSON syntax (quotes around keys and string values, commas between objects, no trailing comma).\n\n8.  **Review and Verify:** Read through the final JSON output.\n    *   Does it match the requested format? Yes.\n    *   Are there exactly 5 question/answer pairs? Yes.\n    *   Are the questions relevant to Full Stack, React, Node.js, MySQL? Yes.\n    *   Is the difficulty appropriate for 5 YOE? Yes, they require more than basic recall.\n    *   Are the answers comprehensive and accurate? Yes.\n    *   Is the JSON valid? Yes."},
-            {text: "```json\n[\n  {\n    \"Question\": \"Describe a scenario where you needed to optimize a slow-running API endpoint in a Node.js application connected to a MySQL database. What steps did you take, and what tools did you use?\",\n    \"Answer\": \"For a slow API endpoint, my first step is always profiling. I'd use tools like `clinic.js` or built-in Node inspectors (`node --inspect`) along with load testing tools (like `k6` or `ApacheBench`) to identify the bottleneck. Often, the issue lies in database interaction. I would analyze the MySQL queries using `EXPLAIN` to understand the query plan. If it revealed full table scans or inefficient joins, I'd optimize the query itself (rewriting joins, simplifying logic) and ensure proper indexing was in place on relevant columns (e.g., foreign keys, columns used in WHERE clauses or ORDER BY). Caching frequently accessed, non-volatile data using Redis or Memcached at the application layer can also significantly reduce database load. If the bottleneck was CPU-bound within Node.js (e.g., complex computations), I might look into offloading work to worker threads or optimizing the JavaScript code itself, perhaps breaking down synchronous tasks.\"\n  },\n  {\n    \"Question\": \"Explain how you manage state in a complex React application. Discuss the pros and cons of Context API vs. libraries like Redux or Zustand, especially considering an application scale suitable for someone with 5 years of experience.\",\n    \"Answer\": \"For complex state management in React, the choice depends on the scale and nature of the state. For localized state, `useState` and `useReducer` are sufficient. For global or shared state across many components: \\n1. **Context API:** Good for low-frequency updates and passing data deep down the component tree without prop drilling (e.g., theme, user authentication status). **Pros:** Built-in, simpler setup for basic cases. **Cons:** Can cause performance issues if the context value updates frequently, as all consuming components re-render; not inherently optimized for complex state transitions or middleware. \\n2. **Redux/Zustand:** Better suited for complex, frequently updated global state (e.g., application data, complex UI states). **Pros:** Centralized store, predictable state transitions (reducers in Redux), powerful middleware (thunks, sagas for async), dev tools for debugging, performance optimizations (selectors prevent unnecessary re-renders). Zustand offers a simpler, hook-based API often with less boilerplate than classic Redux. **Cons:** More boilerplate (especially Redux), steeper learning curve initially. \\nWith 5 years of experience, I'd typically lean towards Redux (with Redux Toolkit for reduced boilerplate) or Zustand for larger applications due to better scalability, maintainability, and debugging capabilities, reserving Context API for simpler global state needs.\"\n  },\n  {\n    \"Question\": \"Describe the concept of database indexing in MySQL. What are common index types, and how would you decide which columns to index to optimize query performance for both read-heavy and write-heavy workloads?\",\n    \"Answer\": \"Indexing in MySQL is crucial for speeding up data retrieval operations (SELECT queries) by creating pointers to data rows, avoiding full table scans. \\n**Common Index Types:**\\n*   **B-Tree:** The default and most common type. Efficient for equality (=), range queries (>, <, BETWEEN), and sorting (ORDER BY).\\n*   **Hash:** Very fast for exact equality lookups (=), but not useful for range queries or sorting.\\n*   **Full-Text:** Used for searching text content within `VARCHAR`, `TEXT` columns.\\n*   **Spatial:** Used for indexing geometrical data.\\n**Indexing Strategy:**\\n*   **Columns:** Index columns frequently used in `WHERE` clauses, `JOIN` conditions (`ON` clauses, typically foreign keys), and `ORDER BY` / `GROUP BY` clauses.\\n*   **Read-Heavy:** Be generous with indexes on columns used for filtering and sorting common queries. Composite indexes (multiple columns) are useful if queries filter/sort on those specific combinations.\\n*   **Write-Heavy:** Be more conservative. Every index needs to be updated during `INSERT`, `UPDATE`, `DELETE` operations, which adds overhead. Index only the most critical columns for essential read performance, and carefully evaluate the cost-benefit of each index. Avoid indexing columns with low cardinality (few unique values) unless they are part of a composite index that significantly improves selectivity.\\n*   **Tools:** Use `EXPLAIN` to analyze query plans and identify potential indexing opportunities or redundant indexes.\"\n  },\n  {\n    \"Question\": \"Explain the Node.js event loop and how asynchronous operations (like database queries or file system operations) work without blocking the main thread. How does this impact application design and error handling?\",\n    \"Answer\": \"The Node.js event loop allows Node to perform non-blocking I/O operations despite being single-threaded. \\n**Mechanism:**\\n1.  **Call Stack:** Tracks function execution.\\n2.  **Event Queue:** Holds callback functions ready to execute after their corresponding async operation completes.\\n3.  **Libuv:** A C library that handles asynchronous operations (network requests, FS operations, timers) often using a thread pool outside the main Node thread.\\n**Flow:** When an async operation (e.g., `fs.readFile`, `db.query`) is called, Node delegates it to `libuv`. The main thread continues executing subsequent code without waiting. When `libuv` finishes the operation (e.g., file read completes, DB query returns), it places the associated callback function into the Event Queue. The Event Loop constantly checks if the Call Stack is empty. If it is, it takes the next callback from the Event Queue and pushes it onto the Call Stack for execution.\\n**Impact:**\\n*   **Design:** Encourages an asynchronous, callback-based (or Promise/async-await based) programming style. Long-running synchronous CPU-bound tasks should be avoided or offloaded (e.g., worker threads) as they *will* block the event loop, making the application unresponsive.\\n*   **Error Handling:** Errors in async operations occur outside the original `try...catch` block where the operation was initiated. You must handle errors within the callback, `.catch()` block of a Promise, or using `try...catch` with `async/await`.\"\n  },\n  {\n    \"Question\": \"Imagine you are designing a RESTful API endpoint in Node.js to handle user profile updates, involving data persistence in MySQL and interaction with a React frontend. Describe the key considerations, including request validation, security, and response handling.\",\n    \"Answer\": \"Designing a `PUT` or `PATCH` endpoint for user profile updates involves several key considerations:\\n1.  **Route Definition:** Define a clear route, e.g., `PUT /api/v1/users/profile` or `PATCH /api/v1/users/:userId/profile` (using PATCH for partial updates is often preferred).\\n2.  **Authentication & Authorization:** Ensure the endpoint is protected. Middleware should verify the user's identity (e.g., using JWT validation) and authorize them to update the specific profile (e.g., users can only update their own profile, admins might update others).\\n3.  **Request Validation:** Implement robust validation (using libraries like `Joi` or `express-validator`) on the request body (`req.body`). Validate data types, formats (email), lengths, required fields, and potentially sanitize inputs (e.g., using `express-validator`'s sanitization features or libraries like `DOMPurify` if handling HTML) to prevent invalid data and security vulnerabilities like XSS or SQL Injection (though parameterized queries are the primary defense against SQLi).\\n4.  **Business Logic:** Isolate the core logic for updating the user profile. This might involve checking if an email is already taken (if changed), hashing passwords if updated (using libraries like `bcrypt`), etc.\\n5.  **Database Interaction:** Use an ORM (like Sequelize or TypeORM) or a query builder (like Knex.js) with parameterized queries to interact securely with the MySQL database. Construct the `UPDATE` statement carefully, only updating the fields provided in the request (especially for PATCH). Handle potential database errors gracefully.\\n6.  **Response Handling:** Send appropriate HTTP status codes: `200 OK` or `204 No Content` on successful update, `400 Bad Request` for validation errors, `401 Unauthorized` or `403 Forbidden` for auth issues, `404 Not Found` if the user doesn't exist, and `500 Internal Server Error` for unexpected server issues. The response body for a `200 OK` might include the updated user profile data (excluding sensitive info like password hashes).\"\n  }\n]\n```"},
-          ],
-        },
-      ],
-    });
-  
-    const result = await chatSession.sendMessage("INSERT_INPUT_HERE");
-    // TODO: Following code needs to be updated for client-side apps.
-    const candidates = result.response.candidates;
-    for(let candidate_index = 0; candidate_index < candidates.length; candidate_index++) {
-      for(let part_index = 0; part_index < candidates[candidate_index].content.parts.length; part_index++) {
-        const part = candidates[candidate_index].content.parts[part_index];
-        if(part.inlineData) {
-          try {
-            const filename = `output_${candidate_index}_${part_index}.${mime.extension(part.inlineData.mimeType)}`;
-            fs.writeFileSync(filename, Buffer.from(part.inlineData.data, 'base64'));
-            console.log(`Output written to: ${filename}`);
-          } catch (err) {
-            console.error(err);
-          }
-        }
-      }
-    }
-    console.log(result.response.text());
-  }
-  
-  run();
+

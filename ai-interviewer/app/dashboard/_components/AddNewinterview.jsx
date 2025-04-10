@@ -14,17 +14,56 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useUser } from '@clerk/nextjs'
+import {chatSession} from '@/utils/GeminiAIModal'
+import {db} from '@/utils/db'
+import {AiInterview} from '@/utils/schema'
+import { LoaderCircle } from "lucide-react"; 
+import { v4 as uuidv4 } from 'uuid';
+import moment from 'moment'
+
 
 function AddNewInterview() {
     const [openDailog, setOpenDailog] =useState(false)
     const [jobPosition,setJobPosition]=useState();
     const [jobDesc,setJobDesc]=useState();
     const [jobExperience,setJobExperience]=useState();
-     
-    const onSubmit=(e)=>{
+    const [loading,setLoading]=useState(false);
+    const [jsonResponse,setJsonResponse]=useState([]);
+    const {user}=useUser();
+    const onSubmit=async(e)=>{
+      setLoading(true)
       e.preventDefault()
-      console.log(setJobPosition, jobDesc,jobExperience)
+      console.log(jobPosition,jobDesc,jobExperience)
 
+     const InputPrompt="Job position: "+jobPosition+", Job Description:"+jobDesc+", Year of Experience:"+jobExperience+" Depends on Job Position, Job Description & Years of Experience give us "+process.env.NEXT_PUBLIC_INTERVIEW_QUESTION_COUNT+" Interview Question alog with Answered in JSON format Give us question and answer field on JSON"
+
+     const result=await chatSession.sendMessage(InputPrompt);
+     const AiJsonResp=(result.response.text()).replace('```json','').replace('```','')
+     console.log(JSON.parse(AiJsonResp));
+     setJsonResponse(AiJsonResp);
+
+     if(AiJsonResp)
+     {
+
+     const resp=await db.insert(AiInterview)
+     .values({
+      aiId:uuidv4(),
+      jsonAiResp:AiJsonResp,
+      jsonPosition:jobPosition,
+      jobDesc:jobDesc,
+      jobExperience:jobExperience,
+      createdBy:user?.primaryEmailAddress?.emailAddress,
+      createdAt:moment().format('DD-MM-yyy')
+     }).returning({aiId:AiInterview.ai.Id})
+
+     console.log("Inserted ID:",resp)
+     }
+     else{
+          console.log("ERROR");
+          
+     }
+     setLoading(false);
     }
     return (
         <div>
@@ -70,17 +109,21 @@ function AddNewInterview() {
         </div>
       </div>
         <div className="flex gap-5 justify-end">
-        <Button type="button"  variant="ghost" onClick={()=>setOpenDailog(false)}>Cancel</Button>
-        <Button type="submit">Start Interview</Button>
+        <Button type="button" variant="ghost" onClick={()=>setOpenDailog(false)}>Cancel</Button>
+        <Button type="submit" disabled={loading} >
+          {loading?
+          <>
+          <LoaderCircle className='animate-spin'/>'Generating from AI'
+          </>:'Start Interview'
+          }
+          </Button>
      </div>
      </form>
       </AlertDialogDescription>
        </AlertDialogHeader>
      </AlertDialogContent>
     </AlertDialog>
-
-
-        </div>
+</div>
     )
 }
 
